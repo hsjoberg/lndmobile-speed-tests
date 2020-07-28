@@ -15,6 +15,7 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 
 import lndmobile.*;
+import lnrpc.Rpc;
 
 public class MainActivity extends AppCompatActivity {
     static final String TAG = "MainActivity";
@@ -182,6 +183,27 @@ public class MainActivity extends AppCompatActivity {
                 public void onResponse(byte[] bytes) {
                     Log.i(TAG, "onResponse unlockWallet");
                     Log.i(TAG, "onResponse unlockWallet time: "  + (System.currentTimeMillis() - start));
+                }
+            }
+        );
+    }
+
+    public void StopDaemon(View view) {
+        lnrpc.Rpc.StopRequest stopRequest = Rpc.StopRequest.newBuilder().build();
+
+        lndmobile.Lndmobile.stopDaemon(
+            stopRequest.toByteArray(),
+            new Callback() {
+                @Override
+                public void onError(Exception e) {
+                    Log.e(TAG, "onError stopDaemon");
+                    e.printStackTrace();
+                }
+
+                @Override
+                public void onResponse(byte[] bytes) {
+                    Log.i(TAG, "onResponse stopDaemon");
+                    Log.i(TAG, "Daemon should be stopped");
                 }
             }
         );
