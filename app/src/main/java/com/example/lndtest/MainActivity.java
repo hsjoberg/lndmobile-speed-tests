@@ -50,11 +50,11 @@ public class MainActivity extends AppCompatActivity {
                 "\n" +
                 "[Bitcoin]\n" +
                 "bitcoin.active=1\n" +
-                "bitcoin.testnet=1\n" +
+                "bitcoin.mainnet=1\n" +
                 "bitcoin.node=neutrino\n" +
                 "\n" +
                 "[Neutrino]\n" +
-                //"neutrino.connect=btcd-testnet.lightning.computer\n" +
+                "neutrino.connect=btcd-mainnet.lightning.computer\n" +
                 "neutrino.feeurl=https://nodes.lightning.computer/fees/v1/btc-fee-estimates.json\n" +
                 "\n" +
                 "[autopilot]\n" +
@@ -94,8 +94,10 @@ public class MainActivity extends AppCompatActivity {
 
                         @Override
                         public void onResponse(byte[] bytes) {
-                            Log.i(TAG, "lnd init onResponse");
-                            Log.i(TAG, "lnd init callback time: " + (System.currentTimeMillis() - start));
+                            Log.i(TAG, "lnd start onResponse");
+                            Log.i(TAG, "lnd start callback time: " + (System.currentTimeMillis() - start));
+                            Log.i(TAG, "Unlocker RPC should be ready");
+
                         }
                     },
                     new lndmobile.Callback() {
@@ -192,18 +194,73 @@ public class MainActivity extends AppCompatActivity {
         lnrpc.Rpc.StopRequest stopRequest = Rpc.StopRequest.newBuilder().build();
 
         lndmobile.Lndmobile.stopDaemon(
-            stopRequest.toByteArray(),
+                stopRequest.toByteArray(),
+                new Callback() {
+                    @Override
+                    public void onError(Exception e) {
+                        Log.e(TAG, "onError stopDaemon");
+                        e.printStackTrace();
+                    }
+
+                    @Override
+                    public void onResponse(byte[] bytes) {
+                        Log.i(TAG, "onResponse stopDaemon");
+                        Log.i(TAG, "Daemon should be stopped");
+                    }
+                }
+        );
+    }
+
+
+    public void GetInfo(View view) {
+        lnrpc.Rpc.GetInfoRequest getInfoRequest = Rpc.GetInfoRequest.newBuilder().build();
+
+        lndmobile.Lndmobile.getInfo(
+            getInfoRequest.toByteArray(),
             new Callback() {
                 @Override
                 public void onError(Exception e) {
-                    Log.e(TAG, "onError stopDaemon");
+                    Log.e(TAG, "onError getInfo");
                     e.printStackTrace();
                 }
 
                 @Override
                 public void onResponse(byte[] bytes) {
-                    Log.i(TAG, "onResponse stopDaemon");
-                    Log.i(TAG, "Daemon should be stopped");
+                    Log.i(TAG, "onResponse getInfo");
+                    try {
+                        Rpc.GetInfoResponse getInfoResponse = Rpc.GetInfoResponse.parseFrom(bytes);
+
+                        Log.i(TAG, getInfoResponse.toString());
+                        Log.i(TAG, String.valueOf(getInfoResponse.getSyncedToGraph()));
+
+                    }
+                    catch (InvalidProtocolBufferException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        );
+    }
+
+    public void ConnectToBitrefill(View view) {
+        lnrpc.Rpc.ConnectPeerRequest connectPeerRequest = Rpc.ConnectPeerRequest.newBuilder().setAddr(
+            Rpc.LightningAddress.newBuilder()
+                .setHost("52.50.244.44:9735")
+                .setPubkey("030c3f19d742ca294a55c00376b3b355c3c90d61c6b6b39554dbc7ac19b141c14f")
+        ).build();
+
+        lndmobile.Lndmobile.connectPeer(
+            connectPeerRequest.toByteArray(),
+            new Callback() {
+                @Override
+                public void onError(Exception e) {
+                    Log.e(TAG, "onError connectPeer");
+                    e.printStackTrace();
+                }
+
+                @Override
+                public void onResponse(byte[] bytes) {
+                    Log.i(TAG, "onResponse connectPeer");
                 }
             }
         );
